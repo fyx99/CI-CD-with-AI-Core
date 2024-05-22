@@ -15,11 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     #environment: TEST
     steps:
-      - uses: actions/checkout@v2
-      
+      - uses: actions/checkout@v4.1.5
+      - uses: actions/setup-python@v5.1.0
       - name: Unzip VCTL
         run: |
-          unzip tool/vctl.zip
-      - name: Build zipped solution from Vflow folder and Manifest.json
+          ls
+      - name: Run deploy script
         run: |
-          mkdir temp_solution/content/files -p
+          python /cicd/pipeline.py
