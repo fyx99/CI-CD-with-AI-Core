@@ -2,11 +2,16 @@
     "executions": [
         {
             "configuration": {
-                "name": "Configuration hellodocker",
-                "scenario_id": "hellodocker",
-                "executable_id": "hellodocker",
+                "name": "Configuration CI/CD Example",
+                "scenario_id": "cicdexample",
+                "executable_id": "cicdexample",
                 "parameter_bindings": [ ],
-                "input_artifact_bindings": [ ]
+                "input_artifact_bindings": [
+                    {
+                        "key": "example-dataset",
+                        "artifact_id": "aaa--eded"
+                    }
+                 ]
             },
             "wait_for_status": "COMPLETED"
         }
