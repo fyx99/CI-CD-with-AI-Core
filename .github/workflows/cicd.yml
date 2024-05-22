@@ -23,4 +23,5 @@ jobs:
           pwd
       - name: Run deploy script
         run: |
+          pip install -r ./cicd/requirements.txt
           python ./cicd/pipeline.py
