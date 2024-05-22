@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: cicdexample
+  annotations:
+    scenarios.ai.sap.com/description: "cicdexample"
+    scenarios.ai.sap.com/name: "cicdexample"
+    executables.ai.sap.com/description: "cicdexample"
+    executables.ai.sap.com/name: "cicdexample"
+    artifacts.ai.sap.com/example-dataset.kind: "dataset"
+    artifacts.ai.sap.com/example-model.kind: "model"
+    artifacts.ai.sap.com/example-model.description: "artifact description"
+    artifacts.ai.sap.com/example-model.labels: | 
+        {"ext.ai.sap.com/customkey1":"customvalue1", "ext.ai.sap.com/customkey2":"customvalue2"}
+  labels:
+    scenarios.ai.sap.com/id: "cicdexample"
+    executables.ai.sap.com/id: cicdexample"
+    ai.sap.com/version: "1.0.0"
+spec:
+  imagePullSecrets:
+    - name: felixdockersecrect
+  entrypoint: cicdexample
+  arguments:
+    parameters: # placeholder for string like inputs
+      - name: env_example # identifier local to this workflow
+        description: description of the parameter
+        default: test
+  templates:
+    - name: cicdexample
+      metadata:
+        labels:
+          ai.sap.com/resourcePlan: starter
+      inputs:
+        artifacts:
+          - name: example-dataset
+            path: /app/data/
+      outputs:
+        artifacts:
+          - name: example-model
+            path: /app/model
+            globalName: example-model
+            archive:
+              none: {}
+      container:
+        image: "docker.io/bfwork/cicdexample"
+        imagePullPolicy: Always
+        command: ["/bin/sh", "-c"]
+        args:
+          - "python /app/src/train.py"

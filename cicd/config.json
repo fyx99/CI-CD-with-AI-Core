@@ -1,0 +1,15 @@
+{
+    "executions": [
+        {
+            "configuration": {
+                "name": "Configuration hellodocker",
+                "scenario_id": "hellodocker",
+                "executable_id": "hellodocker",
+                "parameter_bindings": [ ],
+                "input_artifact_bindings": [ ]
+            },
+            "wait_for_status": "COMPLETED"
+        }
+    ],
+    "deployments": []
+}

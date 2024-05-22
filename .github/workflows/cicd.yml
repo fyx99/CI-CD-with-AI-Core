@@ -1,0 +1,25 @@
+name: AI_CORE_DEPLOY_ON_PUSH
+
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    #environment: TEST
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Unzip VCTL
+        run: |
+          unzip tool/vctl.zip
+      - name: Build zipped solution from Vflow folder and Manifest.json
+        run: |
+          mkdir temp_solution/content/files -p
