@@ -24,4 +24,4 @@ jobs:
       - name: Run deploy script
         run: |
           pip install -r ./cicd/requirements.txt
-          AICORE_AUTH_URL='${{ secrets.AICORE_AUTH_URL }}' AICORE_CLIENT_ID='${{ secrets.AICORE_CLIENT_ID }}' AICORE_CLIENT_SECRET='${{ secrets.AICORE_CLIENT_SECRET }}' AICORE_RESOURCE_GROUP='${{ secrets.AICORE_RESOURCE_GROUP }}' AICORE_BASE_URL='${{ secrets.AICORE_BASE_URL }}' python ./cicd/pipeline.py
+          AICORE_AUTH_URL='${{ secrets.AICORE_AUTH_URL }}' AICORE_CLIENT_ID="${{ secrets.AICORE_CLIENT_ID }}" AICORE_CLIENT_SECRET='${{ secrets.AICORE_CLIENT_SECRET }}' AICORE_RESOURCE_GROUP='${{ secrets.AICORE_RESOURCE_GROUP }}' AICORE_BASE_URL='${{ secrets.AICORE_BASE_URL }}' python ./cicd/pipeline.py
