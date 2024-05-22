@@ -20,6 +20,7 @@ jobs:
       - name: Unzip VCTL
         run: |
           ls
+          pwd
       - name: Run deploy script
         run: |
-          python /cicd/pipeline.py
+          python ./cicd/pipeline.py
