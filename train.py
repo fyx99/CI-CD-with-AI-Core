@@ -7,6 +7,8 @@ import joblib
 if __name__ == "__main__":
     
     import os
+    
+    print("envexample:", os.environ.get("envexample"))
 
     # Specify the directory
     directory = "/app/data"
