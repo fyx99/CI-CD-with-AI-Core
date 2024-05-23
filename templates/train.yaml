@@ -23,7 +23,7 @@ spec:
   arguments:
     parameters: # placeholder for string like inputs
       - name: env_example # identifier local to this workflow
-        description: description of the parameter
+        description: "description of the parameter"
         default: test
   templates:
     - name: cicdexample
