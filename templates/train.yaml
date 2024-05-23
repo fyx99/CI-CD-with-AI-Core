@@ -19,25 +19,12 @@ metadata:
 spec:
   imagePullSecrets:
     - name: felixdockersecrect
-  entrypoint: "cicdexample"
-  arguments:
-    parameters: # placeholder for string like inputs
-      - name: "envexample" # identifier local to this workflow
-        description: "description of the parameter"
-        default: "test"
+  entrypoint: cicdexample
   templates:
-    - name: "cicdexample"
-      metadata:
-        labels:
-          ai.sap.com/resourcePlan: starter
-      inputs:
-        artifacts:
-          - name: exampledataset
-            path: /app/data/
+    - name: cicdexample
       container:
         image: "docker.io/bfwork/cicdexample"
         imagePullPolicy: Always
         command: ["/bin/sh", "-c"]
         args:
           - "python /app/src/train.py"
-
