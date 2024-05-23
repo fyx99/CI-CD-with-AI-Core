@@ -12,4 +12,4 @@ docker build -t bfwork/cicdexample -f Dockerfile .
 docker push bfwork/cicdexample
 
 # Execute the Python script
-#python cicd/pipeline.py
+python cicd/pipeline.py
