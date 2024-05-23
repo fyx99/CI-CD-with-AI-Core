@@ -20,6 +20,11 @@ spec:
   imagePullSecrets:
     - name: felixdockersecrect
   entrypoint: cicdexample
+  arguments:
+    parameters: # placeholder for string like inputs
+      - name: "envexample" # identifier local to this workflow
+        description: "description of the parameter"
+        default: "test"
   templates:
     - name: cicdexample
       container:

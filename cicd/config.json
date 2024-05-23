@@ -1,10 +1,10 @@
 {   
     "artifacts": [
         {
-            "key": "example-dataset",
+            "key": "exampledataset",
             "name": "Example Dataset",
             "kind": "dataset",
-            "url": "ai://cicd1-s3/cicd",
+            "url": "ai://default/cicd",
             "scenario_id": "cicdexample"
         }
     ],
@@ -16,14 +16,12 @@
                 "executable_id": "cicdexample",
                 "parameter_bindings": [ 
                     {
-                        "key": "example-parameter",
+                        "key": "envexample",
                         "value": "test1"
                     } 
                 ],
                 "input_artifact_bindings": [
-                    {
-                        "key": "example-dataset"
-                    }
+
                  ]
             },
             "wait_for_status": "COMPLETED"
