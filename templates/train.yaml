@@ -27,6 +27,13 @@ spec:
         default: "test"
   templates:
     - name: cicdexample
+      outputs:
+        artifacts:
+          - name: example-model
+            path: /app/model
+            globalName: example-model
+            archive:
+              none: {}
       container:
         image: "docker.io/bfwork/cicdexample"
         imagePullPolicy: Always
