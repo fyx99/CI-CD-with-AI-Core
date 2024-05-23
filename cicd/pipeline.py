@@ -1,4 +1,9 @@
 from ai_api_client_sdk.ai_api_v2_client import AIAPIV2Client
+from ai_api_client_sdk.models.artifact import Artifact
+from ai_api_client_sdk.models.parameter_binding import ParameterBinding
+from ai_api_client_sdk.models.input_artifact_binding import InputArtifactBinding
+
+
 import os
 import json
 import time
@@ -10,25 +15,41 @@ AICORE_CLIENT_SECRET = os.environ["AICORE_CLIENT_SECRET"]
 AICORE_RESOURCE_GROUP = os.environ["AICORE_RESOURCE_GROUP"]
 
 
+
 def load_deployment_configuration():
     with open("cicd/config.json") as json_file:
         configuration = json.load(json_file)
+    artifacts = configuration["artifacts"]
     executions = configuration["executions"]
     deployments = configuration["deployments"]
     
-    return executions, deployments
+    return artifacts, executions, deployments
 
 def display_logs(logs, filter_ai_core=True):
     for log in logs:
         if filter_ai_core and log.msg.startswith("time="):
             continue
         print(f"{log.timestamp.isoformat()} {log.msg}")
-
-
-def create_execution(ai_api_v2_client: AIAPIV2Client, execution):
+        
+        
+def create_artifact(ai_api_v2_client: AIAPIV2Client, artifact):
     
+    artifact_response = ai_api_v2_client.artifact.create(artifact["name"], Artifact.Kind(artifact["kind"]), artifact["url"], artifact["scenario_id"])
+    return artifact_response.id
 
-    config_resp = ai_api_v2_client.configuration.create(**execution["configuration"])
+def find_artifact_by_key(key, artifacts):
+    for artifact in artifacts:
+        if artifact["key"] == key:
+            return artifact
+
+def create_execution(ai_api_v2_client: AIAPIV2Client, execution, artifacts):
+    
+    parameter_bindings = [ParameterBinding(e["key"], e["value"]) for e in execution["configuration"]["parameter_bindings"]]
+    input_artifact_bindings = [InputArtifactBinding(e["key"], find_artifact_by_key(e["key"], artifacts)["id"]) for e in execution["configuration"]["input_artifact_bindings"]]
+
+    config_resp = ai_api_v2_client.configuration.create(execution["configuration"]["name"], execution["configuration"]["scenario_id"], execution["configuration"]["executable_id"], parameter_bindings, input_artifact_bindings)
+    
+    
     assert config_resp.message == 'Configuration created'
 
     deployment_resp = ai_api_v2_client.execution.create(config_resp.id)
@@ -72,7 +93,7 @@ def create_deployment(ai_api_v2_client: AIAPIV2Client, deployment):
 
 def deploy():
     
-    executions, deployments = load_deployment_configuration()
+    artifacts, executions, deployments = load_deployment_configuration()
 
     ai_api_v2_client = AIAPIV2Client(
         base_url=AICORE_BASE_URL + "/lm", 
@@ -86,12 +107,20 @@ def deploy():
     resource_group_create = ai_api_v2_client.resource_groups.create(resource_group_id=AICORE_RESOURCE_GROUP)
     print(f"RESOURCE GROUP CREATED {AICORE_RESOURCE_GROUP}")
     
+        
+    # # Get executables
+    # executables = ai_api_v2_client.executable.query(name)
+    # for e in executables.resources:
+    #     print(f"Executable {e.id} v{e.version_id} found")
+    for artifact in artifacts:
+        artifact["id"] = create_artifact(ai_api_v2_client, artifact)
+
 
     for execution in executions:
-        create_execution(ai_api_v2_client, execution)
+        create_execution(ai_api_v2_client, execution, artifacts)
 
     for deployment in deployments:
-        create_deployment(ai_api_v2_client, deployment)
+        create_deployment(ai_api_v2_client, deployment, artifacts)
         
     
     

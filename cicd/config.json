@@ -1,12 +1,29 @@
-{
+{   
+    "artifacts": [
+        {
+            "key": "example-dataset",
+            "name": "Example Dataset",
+            "kind": "dataset",
+            "url": "ai://cicd1-s3/cicd",
+            "scenario_id": "cicdexample"
+        }
+    ],
     "executions": [
         {
             "configuration": {
                 "name": "Configuration CI/CD Example",
                 "scenario_id": "cicdexample",
                 "executable_id": "cicdexample",
-                "parameter_bindings": [ ],
+                "parameter_bindings": [ 
+                    {
+                        "key": "example-parameter",
+                        "value": "test1"
+                    } 
+                ],
                 "input_artifact_bindings": [
+                    {
+                        "key": "example-dataset"
+                    }
                  ]
             },
             "wait_for_status": "COMPLETED"
