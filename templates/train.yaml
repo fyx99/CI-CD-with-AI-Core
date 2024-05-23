@@ -14,7 +14,7 @@ metadata:
         {"ext.ai.sap.com/customkey1":"customvalue1", "ext.ai.sap.com/customkey2":"customvalue2"}
   labels:
     scenarios.ai.sap.com/id: "cicdexample"
-    executables.ai.sap.com/id: cicdexample"
+    executables.ai.sap.com/id: "cicdexample"
     ai.sap.com/version: "1.0.0"
 spec:
   imagePullSecrets:
