@@ -4,6 +4,14 @@ import numpy as np
 import os
 # Load the trained model
 
+import os
+
+# Get all environment variables
+env_vars = os.environ
+
+# Print each environment variable
+for key, value in env_vars.items():
+    print(f"{key}: {value}")
 
 # Initialize FastAPI app
 app = FastAPI()

@@ -82,14 +82,14 @@ def create_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
     for _ in range(60):
         execution_object = ai_api_v2_client.deployment.get(deployment_resp.id)
         status = execution_object.status.value
-        if status == deployment["wait_for_status"] or status == "DEAD":
-            break
         logs = ai_api_v2_client.execution.query_logs(deployment_resp.id).data.result
         print(status, execution_object.status_details, "N LOGS", str(len(logs)))
         try:
             display_logs(logs)
         except:
             pass
+        if status == deployment["wait_for_status"] or status == "DEAD":
+            break
         time.sleep(15)
     
     return 1
@@ -118,10 +118,6 @@ def deploy():
             break
         time.sleep(2)
     
-    # # Get executables
-    # executables = ai_api_v2_client.executable.query(name)
-    # for e in executables.resources:
-    #     print(f"Executable {e.id} v{e.version_id} found")
     for artifact in artifacts:
         artifact["id"] = create_artifact(ai_api_v2_client, artifact)
 

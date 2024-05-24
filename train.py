@@ -3,6 +3,15 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 import joblib
 
+import os
+
+# Get all environment variables
+env_vars = os.environ
+
+# Print each environment variable
+for key, value in env_vars.items():
+    print(f"{key}: {value}")
+
 
 if __name__ == "__main__":
     
