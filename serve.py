@@ -5,13 +5,14 @@ import os
 # Load the trained model
 
 import os
+import sys
 
 # Get all environment variables
 env_vars = os.environ
 
 # Print each environment variable
 for key, value in env_vars.items():
-    print(f"{key}: {value}")
+    print(f"{key}: {value}", file=sys.stderr)
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -31,7 +32,7 @@ def predict(input_data: float):
 
 @app.post("/v2/hello/")
 def hello():
-    print("hello")
+    print("hello", file=sys.stderr)
     return {"prediction": "hello", "env_example": os.environ["ENV_EXAMPLE"]}
 
 

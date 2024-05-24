@@ -4,20 +4,20 @@ from sklearn.linear_model import LinearRegression
 import joblib
 
 import os
+import sys
 
 # Get all environment variables
 env_vars = os.environ
 
 # Print each environment variable
 for key, value in env_vars.items():
-    print(f"{key}: {value}")
+    print(f"{key}: {value}", file=sys.stderr)
 
 
 if __name__ == "__main__":
     
-    import os
     
-    print("envexample:", os.environ.get("envexample"))
+    print("envexample:", os.environ.get("envexample"), file=sys.stderr)
 
     # Specify the directory
     directory = "/app/data"
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     # Save the trained model to a file
     joblib.dump(model, "/app/model/linear_regression_model.pkl")
     
-    print("Training done")
+    print("Training done", file=sys.stderr)
     
     directory = "/app/model"
 
