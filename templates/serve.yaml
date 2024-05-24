@@ -40,4 +40,4 @@ spec:
               protocol: TCP
           env:
             - name: STORAGE_URI
-              value: "{{inputs.artifacts.textmodel}}"
+              value: "{{inputs.parameters.envexample}}"
