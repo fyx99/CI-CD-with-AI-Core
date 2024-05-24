@@ -69,7 +69,7 @@ def create_execution(ai_api_v2_client: AICoreV2Client, execution, artifacts):
     return 1
     
         
-def create_deployment(ai_api_v2_client: AICoreV2Client, deployment):
+def create_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
     
     
     config_resp = ai_api_v2_client.configuration.create(**deployment["configuration"])
@@ -124,11 +124,11 @@ def deploy():
         artifact["id"] = create_artifact(ai_api_v2_client, artifact)
 
 
-    for execution in executions:
-        create_execution(ai_api_v2_client, execution, artifacts)
-
     for deployment in deployments:
         create_deployment(ai_api_v2_client, deployment, artifacts)
+
+    for execution in executions:
+        create_execution(ai_api_v2_client, execution, artifacts)
         
     
     
