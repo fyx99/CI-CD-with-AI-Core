@@ -71,11 +71,13 @@ def create_execution(ai_api_v2_client: AICoreV2Client, execution, artifacts):
         
 def create_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
     
-    
-    config_resp = ai_api_v2_client.configuration.create(**deployment["configuration"])
-    assert config_resp.message == 'Configuration created'
+    parameter_bindings = [ParameterBinding(e["key"], e["value"]) for e in deployment["configuration"]["parameter_bindings"]]
+    input_artifact_bindings = [InputArtifactBinding(e["key"], find_artifact_by_key(e["key"], artifacts)["id"]) for e in deployment["configuration"]["input_artifact_bindings"]]
 
-    deployment_resp = ai_api_v2_client.execution.create(config_resp.id)
+    config_resp = ai_api_v2_client.configuration.create(deployment["configuration"]["name"], deployment["configuration"]["scenario_id"], deployment["configuration"]["executable_id"], parameter_bindings, input_artifact_bindings)
+    
+
+    deployment_resp = ai_api_v2_client.deployment.create(config_resp.id)
 
     for _ in range(60):
         execution_object = ai_api_v2_client.deployment.get(deployment_resp.id)
