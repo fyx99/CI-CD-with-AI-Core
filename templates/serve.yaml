@@ -34,7 +34,7 @@ spec:
         maxReplicas: 5
         containers:
         - name: kserve-container
-          image: docker.io/bfwork/huggingcore-customgpu
+          image: docker.io/bfwork/cicdexample
           ports:
             - containerPort: 8080
               protocol: TCP
