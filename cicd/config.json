@@ -11,7 +11,7 @@
     "executions": [
         {
             "configuration": {
-                "name": "Configuration CI/CD Example",
+                "name": "Configuration CI/CD Example Training",
                 "scenario_id": "cicdexample",
                 "executable_id": "cicdexample",
                 "parameter_bindings": [ 
@@ -27,5 +27,23 @@
             "wait_for_status": "COMPLETED"
         }
     ],
-    "deployments": []
+    "deployments": [
+        {
+            "configuration": {
+                "name": "Configuration CI/CD Example Serving",
+                "scenario_id": "cicdexample",
+                "executable_id": "cicdexample2",
+                "parameter_bindings": [ 
+                    {
+                        "key": "envexample",
+                        "value": "test1"
+                    } 
+                ],
+                "input_artifact_bindings": [
+
+                 ]
+            },
+            "wait_for_status": "COMPLETED"
+        }
+    ]
 }

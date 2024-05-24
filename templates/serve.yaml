@@ -1,0 +1,40 @@
+apiVersion: ai.sap.com/v1alpha1
+kind: ServingTemplate
+metadata:
+  name: cicdexample2
+  annotations:
+    scenarios.ai.sap.com/description: "cicdexample2"
+    scenarios.ai.sap.com/name: "cicdexample"
+    executables.ai.sap.com/description: "cicdexample2"
+    executables.ai.sap.com/name: "cicdexample2"
+  labels:
+    scenarios.ai.sap.com/id: "cicdexample2"
+    ai.sap.com/version: "1.0"
+spec:
+  inputs:
+    parameters: 
+      - name: envexample
+        default: value
+        type: string
+        description: description of the envexample
+  template:
+    apiVersion: "serving.kserve.io/v1beta1"
+    metadata:
+      annotations: |
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: 1
+        autoscaling.knative.dev/targetBurstCapacity: 0
+      labels: |
+        ai.sap.com/resourcePlan: infer.l
+    spec: |
+      predictor:
+        imagePullSecrets:
+          - name: felixdockersecrect
+        minReplicas: 1
+        maxReplicas: 5
+        containers:
+        - name: kserve-container
+          image: docker.io/bfwork/huggingcore-customgpu
+          ports:
+            - containerPort: 8080
+              protocol: TCP

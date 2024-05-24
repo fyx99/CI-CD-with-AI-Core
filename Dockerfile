@@ -24,4 +24,4 @@ RUN chgrp -R 65534 /app && \
 WORKDIR /app
 
 # for serving default command
-CMD ["uvicorn", "app:api", "--host", "0.0.0.0", "--port", "8080"]   
+CMD ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "8080"]   
