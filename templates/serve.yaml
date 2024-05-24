@@ -8,7 +8,7 @@ metadata:
     executables.ai.sap.com/description: "cicdexample2"
     executables.ai.sap.com/name: "cicdexample2"
   labels:
-    scenarios.ai.sap.com/id: "cicdexample2"
+    scenarios.ai.sap.com/id: "cicdexample"
     ai.sap.com/version: "1.0"
 spec:
   inputs:
