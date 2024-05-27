@@ -38,5 +38,8 @@ spec:
         image: "docker.io/bfwork/cicdexample"
         imagePullPolicy: Always
         command: ["/bin/sh", "-c"]
+        env: 
+          - name: envexample
+            value: "{{workflow.parameters.envexample}}"
         args:
           - "python /app/src/train.py"
