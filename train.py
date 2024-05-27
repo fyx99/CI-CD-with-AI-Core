@@ -49,3 +49,8 @@ if __name__ == "__main__":
 
     # Print the list of files
     print(files)
+    
+    for i in range(100):
+        print(i)
+        import time
+        time.sleep(1)
