@@ -121,6 +121,13 @@ def deploy():
     for artifact in artifacts:
         artifact["id"] = create_artifact(ai_api_v2_client, artifact)
 
+    old_deployments = ai_api_v2_client.deployment.query()
+    for deployment in old_deployments:
+        ai_api_v2_client.deployment.delete(deployment["id"])
+        
+    old_executions = ai_api_v2_client.execution.query()
+    for execution in old_executions:
+        ai_api_v2_client.execution.delete(execution["id"])
 
     for deployment in deployments:
         create_deployment(ai_api_v2_client, deployment, artifacts)
