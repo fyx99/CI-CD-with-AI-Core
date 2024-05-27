@@ -28,12 +28,12 @@ def predict(input_data: float):
     prediction = model.predict(input_array)
     
     # Return the prediction as JSON response
-    return {"prediction": prediction[0], "env_example": os.environ["ENV_EXAMPLE"]}
+    return {"prediction": prediction[0], "envexample": os.environ.get("envexample", "none")}
 
 @app.post("/v2/hello/")
 def hello():
     print("hello", file=sys.stderr)
-    return {"prediction": "hello", "env_example": os.environ["ENV_EXAMPLE"]}
+    return {"prediction": "hello", "envexample": os.environ.get("envexample", "none")}
 
 
 # Run the FastAPI server with UVicorn

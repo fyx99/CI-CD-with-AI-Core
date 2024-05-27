@@ -5,6 +5,7 @@ from ai_api_client_sdk.models.input_artifact_binding import InputArtifactBinding
 from ai_api_client_sdk.models.target_status import TargetStatus
 
 
+from datetime import datetime, timedelta
 
 import os
 import json
@@ -27,16 +28,12 @@ def load_deployment_configuration():
     
     return artifacts, executions, deployments
 
-def display_logs(logs, last_date, filter_ai_core=True):
+def display_logs(logs, filter_ai_core=True):
     for log in logs:
-        if last_date and log.timestamp < last_date:
-            continue
         if filter_ai_core and log.msg.startswith("time="):
             continue
         print(f"{log.timestamp.isoformat()} {log.msg}")
-    last_date = logs[0].timestamp if logs else None
-    return last_date
-        
+
         
 def create_artifact(ai_api_v2_client: AICoreV2Client, artifact):
     available_artifacts = ai_api_v2_client.artifact.query()
@@ -64,7 +61,7 @@ def configurations_to_string(config):
     return json.dumps(dconfig, sort_keys=True)
     
 
-def executable_status(ai_api_v2_client: AICoreV2Client, executable):
+def executable_status(ai_api_v2_client: AICoreV2Client, executable, last_time):
     if executable["type"] == "execution":
         execution_object = ai_api_v2_client.execution.get(executable["id"])
         status = execution_object.status.value
@@ -76,25 +73,29 @@ def executable_status(ai_api_v2_client: AICoreV2Client, executable):
         status = execution_object.status.value
         status_details = execution_object.status_details
         status_message = execution_object.status_message
-        logs = ai_api_v2_client.deployment.query_logs(executable["id"]).data.result
-    return status, status_details, status_message, logs
+        start_time = last_time if last_time else execution_object.submission_time
+        start_time = start_time + timedelta(seconds=1)
+        logs = ai_api_v2_client.deployment.query_logs(executable["id"], start=start_time).data.result
+        
+    return status, status_details, status_message, logs, logs[0].timestamp if logs else last_time
 
 
 def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
     
     print("#"*50)
+    print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
     
-    last_date = None
+    last_time = None
     for _ in range(60):
         try:
-            status, status_details, status_message, logs = executable_status(ai_api_v2_client, executable)
+            status, status_details, status_message, logs, last_time = executable_status(ai_api_v2_client, executable, last_time)
         except Exception as e:
             time.sleep(15)
             print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
             continue
         if len(logs) < 1:
             print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
-        last_date = display_logs(logs, last_date)
+        display_logs(logs)
         
         if status == executable["wait_for_status"] or status == "DEAD":
             break
@@ -218,4 +219,22 @@ def deploy(cleanup=True, wait_for_logs=True):
             
 if __name__ == "__main__":
     
-    deploy()
+    #deploy()
+    
+    ai_api_v2_client = AICoreV2Client(
+        base_url=AICORE_BASE_URL, 
+        auth_url=AICORE_AUTH_URL + "/oauth/token", 
+        client_id=AICORE_CLIENT_ID,
+        client_secret=AICORE_CLIENT_SECRET, 
+        resource_group=AICORE_RESOURCE_GROUP
+    )
+    executable = {
+        "id": "d067df1c857af704",
+        "configuration": {
+            "executable_id": "test"
+        },
+        "type": "deployment",
+        "wait_for_status": "COMPLETED"
+    }
+    
+    wait_on_executable_logs(ai_api_v2_client, executable)

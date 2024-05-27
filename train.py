@@ -9,12 +9,14 @@ import sys
 # Get all environment variables
 env_vars = os.environ
 
-# Print each environment variable
-for key, value in env_vars.items():
-    print(f"{key}: {value}", file=sys.stderr)
 
 
 if __name__ == "__main__":
+    
+    # Print each environment variable
+    for key, value in env_vars.items():
+        print(f"{key}: {value}", file=sys.stderr)
+
     
     
     print("envexample:", os.environ.get("envexample"), file=sys.stderr)
