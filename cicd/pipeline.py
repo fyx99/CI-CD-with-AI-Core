@@ -90,6 +90,7 @@ def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
             status, status_details, status_message, logs = executable_status(ai_api_v2_client, executable)
         except Exception as e:
             time.sleep(15)
+            print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
             continue
         if len(logs) < 1:
             print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
