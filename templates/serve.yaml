@@ -39,5 +39,5 @@ spec:
             - containerPort: 8080
               protocol: TCP
           env:
-            - name: STORAGE_URI
+            - name: envexample
               value: "{{inputs.parameters.envexample}}"
