@@ -28,7 +28,8 @@ jobs:
       - name: Run pip install
         run: pip install -r ./cicd/requirements.txt
       - name: Run pipeline script
-        run: python ./cicd/pipeline.py  
+        run: |
+          python ./cicd/pipeline.py  
   deploy-tst:
     if: github.ref == 'refs/heads/tst'
     runs-on: ubuntu-latest
@@ -46,7 +47,8 @@ jobs:
       - name: Run pip install
         run: pip install -r ./cicd/requirements.txt
       - name: Run pipeline script
-        run: python ./cicd/pipeline.py  
+        run: |
+          python ./cicd/pipeline.py  
   deploy-prd:
     if: github.ref == 'refs/heads/prd'
     runs-on: ubuntu-latest
@@ -64,4 +66,5 @@ jobs:
       - name: Run pip install
         run: pip install -r ./cicd/requirements.txt
       - name: Run pipeline script
-        run: python ./cicd/pipeline.py
+        run: |
+          python ./cicd/pipeline.py  

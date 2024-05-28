@@ -14,8 +14,8 @@ env_vars = os.environ
 if __name__ == "__main__":
     
     # Print each environment variable
-    for key, value in env_vars.items():
-        print(f"{key}: {value}", file=sys.stderr)
+    # for key, value in env_vars.items():
+    #     print(f"{key}: {value}", file=sys.stderr)
 
     
     
@@ -52,7 +52,3 @@ if __name__ == "__main__":
     # Print the list of files
     print(files)
     
-    for i in range(100):
-        print(i)
-        import time
-        time.sleep(1)
