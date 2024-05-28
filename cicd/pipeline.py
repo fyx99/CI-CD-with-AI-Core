@@ -186,6 +186,7 @@ def deploy(cleanup=True, wait_for_logs=True):
         client_secret=AICORE_CLIENT_SECRET, 
         resource_group=AICORE_RESOURCE_GROUP
     )
+    
 
     resource_group_create = ai_api_v2_client.resource_groups.create(resource_group_id=AICORE_RESOURCE_GROUP)
     print(f"RESOURCE GROUP CREATED {AICORE_RESOURCE_GROUP}")
