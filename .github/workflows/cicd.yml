@@ -11,10 +11,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-dev:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.ref_name }}
+      name: main
     env:
       AICORE_AUTH_URL: '${{ secrets.AICORE_AUTH_URL }}'
       AICORE_CLIENT_ID: '${{ secrets.AICORE_CLIENT_ID }}'
@@ -24,7 +25,43 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.5
       - uses: actions/setup-python@v5.1.0
-      - name: Run deploy script
-        run: |
-          pip install -r ./cicd/requirements.txt
-          python ./cicd/pipeline.py
+      - name: Run pip install
+        run: pip install -r ./cicd/requirements.txt
+      - name: Run pipeline script
+        run: python ./cicd/pipeline.py  
+  deploy-tst:
+    if: github.ref == 'refs/heads/tst'
+    runs-on: ubuntu-latest
+    environment:
+      name: tst
+    env:
+      AICORE_AUTH_URL: '${{ secrets.AICORE_AUTH_URL }}'
+      AICORE_CLIENT_ID: '${{ secrets.AICORE_CLIENT_ID }}'
+      AICORE_CLIENT_SECRET: '${{ secrets.AICORE_CLIENT_SECRET }}'
+      AICORE_RESOURCE_GROUP: '${{ secrets.AICORE_RESOURCE_GROUP }}'
+      AICORE_BASE_URL: '${{ secrets.AICORE_BASE_URL }}'
+    steps:
+      - uses: actions/checkout@v4.1.5
+      - uses: actions/setup-python@v5.1.0
+      - name: Run pip install
+        run: pip install -r ./cicd/requirements.txt
+      - name: Run pipeline script
+        run: python ./cicd/pipeline.py  
+  deploy-prd:
+    if: github.ref == 'refs/heads/prd'
+    runs-on: ubuntu-latest
+    environment:
+      name: prd
+    env:
+      AICORE_AUTH_URL: '${{ secrets.AICORE_AUTH_URL }}'
+      AICORE_CLIENT_ID: '${{ secrets.AICORE_CLIENT_ID }}'
+      AICORE_CLIENT_SECRET: '${{ secrets.AICORE_CLIENT_SECRET }}'
+      AICORE_RESOURCE_GROUP: '${{ secrets.AICORE_RESOURCE_GROUP }}'
+      AICORE_BASE_URL: '${{ secrets.AICORE_BASE_URL }}'
+    steps:
+      - uses: actions/checkout@v4.1.5
+      - uses: actions/setup-python@v5.1.0
+      - name: Run pip install
+        run: pip install -r ./cicd/requirements.txt
+      - name: Run pipeline script
+        run: python ./cicd/pipeline.py
