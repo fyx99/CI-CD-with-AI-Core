@@ -18,7 +18,7 @@ if __name__ == "__main__":
     #     print(f"{key}: {value}", file=sys.stderr)
 
     
-    
+    print("hellodemo")
     print("envexample:", os.environ.get("envexample"), file=sys.stderr)
 
     # Specify the directory
@@ -51,4 +51,5 @@ if __name__ == "__main__":
 
     # Print the list of files
     print(files)
+    
     
