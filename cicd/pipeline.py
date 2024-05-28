@@ -178,7 +178,7 @@ def clean_up_tenant(ai_api_v2_client: AICoreV2Client):
 def deploy(cleanup=True, wait_for_logs=True):
     
     artifacts, executions, deployments = load_deployment_configuration()
-
+    print(AICORE_AUTH_URL)
     ai_api_v2_client = AICoreV2Client(
         base_url=AICORE_BASE_URL, 
         auth_url=AICORE_AUTH_URL + "/oauth/token", 
