@@ -35,7 +35,7 @@ def display_logs(logs, filter_ai_core=True):
         print(f"{log.timestamp.isoformat()} {log.msg}")
 
         
-def create_artifact(ai_api_v2_client: AICoreV2Client, artifact):
+def create_artifact(ai_api_v2_client: AICoreV2Client, artifact: Artifact):
     available_artifacts = ai_api_v2_client.artifact.query()
     for aartifact in available_artifacts.resources:
         if aartifact.name == artifact["name"] and aartifact.kind == Artifact.Kind(artifact["kind"]) and aartifact.url == artifact["url"] and aartifact.scenario_id == artifact["scenario_id"]:
@@ -62,13 +62,16 @@ def configurations_to_string(config):
     
 
 def executable_status(ai_api_v2_client: AICoreV2Client, executable, last_time):
-    if executable["type"] == "execution":
+    
+    if executable["type"] == "EXECUTION":
         execution_object = ai_api_v2_client.execution.get(executable["id"])
         status = execution_object.status.value
         status_details = execution_object.status_details
         status_message = execution_object.status_message
-        logs = ai_api_v2_client.execution.query_logs(executable["id"]).data.result
-    elif executable["type"] == "deployment":
+        start_time = last_time if last_time else execution_object.submission_time
+        start_time = start_time + timedelta(seconds=1)
+        logs = ai_api_v2_client.execution.query_logs(executable["id"], start=start_time).data.result
+    elif executable["type"] == "DEPLOYMENT":
         execution_object = ai_api_v2_client.deployment.get(executable["id"])
         status = execution_object.status.value
         status_details = execution_object.status_details
@@ -77,15 +80,16 @@ def executable_status(ai_api_v2_client: AICoreV2Client, executable, last_time):
         start_time = start_time + timedelta(seconds=1)
         logs = ai_api_v2_client.deployment.query_logs(executable["id"], start=start_time).data.result
         
-    return status, status_details, status_message, logs, logs[0].timestamp if logs else last_time
+    return status, status_details, status_message, logs, logs[-1].timestamp if logs else last_time
 
 
 def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
     
-    print("#"*50)
+    print("#"*55)
     print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
     
     last_time = None
+    logs_started = False
     for _ in range(60):
         try:
             status, status_details, status_message, logs, last_time = executable_status(ai_api_v2_client, executable, last_time)
@@ -93,8 +97,10 @@ def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
             time.sleep(15)
             print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
             continue
-        if len(logs) < 1:
+        if not logs_started and len(logs) < 1:
             print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
+        else:
+            logs_started = True
         display_logs(logs)
         
         if status == executable["wait_for_status"] or status == "DEAD":
@@ -120,7 +126,7 @@ def create_configuration(ai_api_v2_client: AICoreV2Client, configuration, artifa
             return aconfiguration.id
 
     config_resp = ai_api_v2_client.configuration.create(**config)
-    assert config_resp.message == 'Configuration created'
+
     return config_resp.id
 
 
@@ -145,7 +151,8 @@ def create_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
     
     return deployment_resp.id
 
-def clean_up_tenant(ai_api_v2_client):
+
+def clean_up_tenant(ai_api_v2_client: AICoreV2Client):
     old_deployments = ai_api_v2_client.deployment.query()
     for deployment in old_deployments.resources:
         try:
@@ -180,7 +187,6 @@ def deploy(cleanup=True, wait_for_logs=True):
         resource_group=AICORE_RESOURCE_GROUP
     )
 
-
     resource_group_create = ai_api_v2_client.resource_groups.create(resource_group_id=AICORE_RESOURCE_GROUP)
     print(f"RESOURCE GROUP CREATED {AICORE_RESOURCE_GROUP}")
     sync = ai_api_v2_client.applications.refresh("felix-cicd")
@@ -194,47 +200,59 @@ def deploy(cleanup=True, wait_for_logs=True):
     if cleanup:
         clean_up_tenant(ai_api_v2_client)
 
-
     for artifact in artifacts:
         artifact["id"] = create_artifact(ai_api_v2_client, artifact)
 
     for execution in executions:
         execution["id"] = create_execution(ai_api_v2_client, execution, artifacts)
-        execution["type"] = "execution"
+        execution["type"] = "EXECUTION"
 
     for deployment in deployments:
         deployment["id"] = create_deployment(ai_api_v2_client, deployment, artifacts)
-        deployment["type"] = "deployment"
+        deployment["type"] = "DEPLOYMENT"
 
-
-        
     if wait_for_logs:
-        for deployment in deployments:
-            wait_on_executable_logs(ai_api_v2_client, deployment)
-
         for execution in executions:
             wait_on_executable_logs(ai_api_v2_client, execution)
+        for deployment in deployments:
+            wait_on_executable_logs(ai_api_v2_client, deployment)
 
             
             
 if __name__ == "__main__":
     
-    #deploy()
+    deploy()
     
-    ai_api_v2_client = AICoreV2Client(
-        base_url=AICORE_BASE_URL, 
-        auth_url=AICORE_AUTH_URL + "/oauth/token", 
-        client_id=AICORE_CLIENT_ID,
-        client_secret=AICORE_CLIENT_SECRET, 
-        resource_group=AICORE_RESOURCE_GROUP
-    )
-    executable = {
-        "id": "d067df1c857af704",
-        "configuration": {
-            "executable_id": "test"
-        },
-        "type": "deployment",
-        "wait_for_status": "COMPLETED"
-    }
     
-    wait_on_executable_logs(ai_api_v2_client, executable)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    # ai_api_v2_client = AICoreV2Client(
+    #     base_url=AICORE_BASE_URL, 
+    #     auth_url=AICORE_AUTH_URL + "/oauth/token", 
+    #     client_id=AICORE_CLIENT_ID,
+    #     client_secret=AICORE_CLIENT_SECRET, 
+    #     resource_group=AICORE_RESOURCE_GROUP
+    # )
+    # executable = {
+    #     "id": "dda52040be151157",
+    #     "configuration": {
+    #         "executable_id": "test"
+    #     },
+    #     "type": "DEPLOYMENT",
+    #     "wait_for_status": "COMPLETED"
+    # }
+    
+    # wait_on_executable_logs(ai_api_v2_client, executable)

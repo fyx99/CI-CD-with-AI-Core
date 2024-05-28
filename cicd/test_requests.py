@@ -28,6 +28,5 @@ if __name__ == "__main__":
         client_secret=AICORE_CLIENT_SECRET, 
         resource_group=AICORE_RESOURCE_GROUP
     )
-    res = ai_api_v2_client.rest_client.post("/inference/deployments/d067df1c857af704/v2/hello/")
-    
-    print(res.content)
+    res = ai_api_v2_client.rest_client.post("/inference/deployments/dda52040be151157/v2/hello/")
+    print(res.__dict__)
