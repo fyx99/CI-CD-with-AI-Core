@@ -251,36 +251,3 @@ if __name__ == "__main__":
     
     deploy()
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # ai_api_v2_client = AICoreV2Client(
-    #     base_url=AICORE_BASE_URL, 
-    #     auth_url=AICORE_AUTH_URL + "/oauth/token", 
-    #     client_id=AICORE_CLIENT_ID,
-    #     client_secret=AICORE_CLIENT_SECRET, 
-    #     resource_group=AICORE_RESOURCE_GROUP
-    # )
-    # executable = {
-    #     "id": "dda52040be151157",
-    #     "configuration": {
-    #         "executable_id": "test"
-    #     },
-    #     "type": "DEPLOYMENT",
-    #     "wait_for_status": "COMPLETED"
-    # }
-    
-    # wait_on_executable_logs(ai_api_v2_client, executable)
