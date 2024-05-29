@@ -39,6 +39,7 @@
                 ],
                 "input_artifact_bindings": []
             },
+            "destination_name": "AI_CORE_DEPLOYMENT_CICD2",
             "wait_for_status": "RUNNING"
         }
     ]

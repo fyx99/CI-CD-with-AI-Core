@@ -1,8 +1,10 @@
+from typing import List
 from ai_core_sdk.ai_core_v2_client import AICoreV2Client
 from ai_api_client_sdk.models.artifact import Artifact
 from ai_api_client_sdk.models.parameter_binding import ParameterBinding
 from ai_api_client_sdk.models.input_artifact_binding import InputArtifactBinding
 from ai_api_client_sdk.models.target_status import TargetStatus
+from ai_api_client_sdk.models.log_response import LogResultItem
 
 
 from datetime import datetime, timedelta
@@ -10,6 +12,9 @@ from datetime import datetime, timedelta
 import os
 import json
 import time
+import logging
+
+from cicd.destinations import update_deployment_destination
 
 AICORE_AUTH_URL = os.environ["AICORE_AUTH_URL"]
 AICORE_BASE_URL = os.environ["AICORE_BASE_URL"]
@@ -20,6 +25,7 @@ AICORE_RESOURCE_GROUP = os.environ["AICORE_RESOURCE_GROUP"]
 
 
 def load_deployment_configuration():
+    """load ai core deployment configuration file from json, file needs to be in the cicd folder"""
     with open("cicd/config.json") as json_file:
         configuration = json.load(json_file)
     artifacts = configuration["artifacts"]
@@ -28,101 +34,50 @@ def load_deployment_configuration():
     
     return artifacts, executions, deployments
 
-def display_logs(logs, filter_ai_core=True):
+def display_logs(logs: List[LogResultItem], filter_ai_core=True):
+    """print logs and filter ai core platform logs starting with time="""
     for log in logs:
         if filter_ai_core and log.msg.startswith("time="):
             continue
-        print(f"{log.timestamp.isoformat()} {log.msg}")
+        logging.info(f"{log.timestamp.isoformat()} {log.msg}")
 
         
-def create_artifact(ai_api_v2_client: AICoreV2Client, artifact: Artifact):
+def create_artifact(ai_api_v2_client: AICoreV2Client, artifact_b: Artifact):
+    """create or find duplicate artifact from json configuration"""    
     available_artifacts = ai_api_v2_client.artifact.query()
-    for aartifact in available_artifacts.resources:
-        if aartifact.name == artifact["name"] and aartifact.kind == Artifact.Kind(artifact["kind"]) and aartifact.url == artifact["url"] and aartifact.scenario_id == artifact["scenario_id"]:
+    for artifact_a in available_artifacts.resources:
+        if artifact_a.name == artifact_b["name"] and artifact_a.kind == Artifact.Kind(artifact_b["kind"]) and artifact_a.url == artifact_b["url"] and artifact_a.scenario_id == artifact_b["scenario_id"]:
             # duplicate check to not fill up tenant
-            return aartifact.id
-    artifact_response = ai_api_v2_client.artifact.create(artifact["name"], Artifact.Kind(artifact["kind"]), artifact["url"], artifact["scenario_id"])
+            return artifact_a.id
+    artifact_response = ai_api_v2_client.artifact.create(artifact_b["name"], Artifact.Kind(artifact_b["kind"]), artifact_b["url"], artifact_b["scenario_id"])
     return artifact_response.id
 
 
-def find_artifact_by_key(key, artifacts):
-    for artifact in artifacts:
-        if artifact["key"] == key:
-            return artifact
-
-
-def configurations_to_string(config):
-    dconfig = {}
-    dconfig["name"] = config["name"]
-    dconfig["scenario_id"] = config["scenario_id"]
-    dconfig["executable_id"] = config["executable_id"]
-    dconfig["parameter_bindings"] = [p.to_dict() for p in config["parameter_bindings"]]
-    dconfig["input_artifact_bindings"] = [p.to_dict() for p in config["input_artifact_bindings"]]
-    return json.dumps(dconfig, sort_keys=True)
+def configuration_to_string(configuration_object):
+    """helper to dump config to json-string to compare nested values"""
+    configuration_dict = {}
+    configuration_dict["name"] = configuration_object["name"]
+    configuration_dict["scenario_id"] = configuration_object["scenario_id"]
+    configuration_dict["executable_id"] = configuration_object["executable_id"]
+    configuration_dict["parameter_bindings"] = [p.to_dict() for p in configuration_object["parameter_bindings"]]
+    configuration_dict["input_artifact_bindings"] = [p.to_dict() for p in configuration_object["input_artifact_bindings"]]
+    return json.dumps(configuration_dict, sort_keys=True)
     
-
-def executable_status(ai_api_v2_client: AICoreV2Client, executable, last_time):
-    
-    if executable["type"] == "EXECUTION":
-        execution_object = ai_api_v2_client.execution.get(executable["id"])
-        status = execution_object.status.value
-        status_details = execution_object.status_details
-        status_message = execution_object.status_message
-        start_time = last_time if last_time else execution_object.submission_time
-        start_time = start_time + timedelta(seconds=1)
-        logs = ai_api_v2_client.execution.query_logs(executable["id"], start=start_time).data.result
-    elif executable["type"] == "DEPLOYMENT":
-        execution_object = ai_api_v2_client.deployment.get(executable["id"])
-        status = execution_object.status.value
-        status_details = execution_object.status_details
-        status_message = execution_object.status_message
-        start_time = last_time if last_time else execution_object.submission_time
-        start_time = start_time + timedelta(seconds=1)
-        logs = ai_api_v2_client.deployment.query_logs(executable["id"], start=start_time).data.result
-        
-    return status, status_details, status_message, logs, logs[-1].timestamp if logs else last_time
-
-
-def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
-    
-    print("#"*55)
-    print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
-    
-    last_time = None
-    logs_started = False
-    for _ in range(60):
-        try:
-            status, status_details, status_message, logs, last_time = executable_status(ai_api_v2_client, executable, last_time)
-        except Exception as e:
-            time.sleep(15)
-            print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
-            continue
-        if not logs_started and len(logs) < 1:
-            print("POLLING LOGS", executable["type"], executable["configuration"]["executable_id"], executable["id"])
-        else:
-            logs_started = True
-        display_logs(logs)
-        
-        if status == executable["wait_for_status"] or status == "DEAD":
-            break
-        if len(logs) < 1:
-            time.sleep(13)  # sleep longer if not ready
-        time.sleep(2)
-
 
 def create_configuration(ai_api_v2_client: AICoreV2Client, configuration, artifacts):
+    """create or find duplicate configuration"""
     
     parameter_bindings = [ParameterBinding(e["key"], e["value"]) for e in configuration["parameter_bindings"]]
-    input_artifact_bindings = [InputArtifactBinding(e["key"], find_artifact_by_key(e["key"], artifacts)["id"]) for e in configuration["input_artifact_bindings"]]
+    input_artifact_bindings = [InputArtifactBinding(e["key"], filter(lambda d: d["key"] == e["key"], artifacts)["id"]) for e in configuration["input_artifact_bindings"]]
 
     available_configurations = ai_api_v2_client.configuration.query()
 
     config = { "name": configuration["name"], "scenario_id": configuration["scenario_id"], "executable_id": configuration["executable_id"], "parameter_bindings": parameter_bindings, "input_artifact_bindings": input_artifact_bindings}
     
-    sconfig = configurations_to_string(config)
+    sconfig = configuration_to_string(config)
     
     for aconfiguration in available_configurations.resources:
-        if configurations_to_string(aconfiguration.__dict__) == sconfig: # same configs
+        if configuration_to_string(aconfiguration.__dict__) == sconfig: # same configs
             return aconfiguration.id
 
     config_resp = ai_api_v2_client.configuration.create(**config)
@@ -131,28 +86,89 @@ def create_configuration(ai_api_v2_client: AICoreV2Client, configuration, artifa
 
 
 def create_execution(ai_api_v2_client: AICoreV2Client, execution, artifacts):
+    """create execution"""
     
     config_id = create_configuration(ai_api_v2_client, execution["configuration"], artifacts)
 
-    execution_resp = ai_api_v2_client.execution.create(config_id)
+    execution_response = ai_api_v2_client.execution.create(config_id)
     
-    print("CREATED EXECUTION", execution_resp.id)
+    logging.info(f"CREATED EXECUTION {execution_response.id}")
     
-    return execution_resp.id
+    return execution_response.id
 
 
 def create_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
+    """create deployment"""
     
     config_id = create_configuration(ai_api_v2_client, deployment["configuration"], artifacts)
 
-    deployment_resp = ai_api_v2_client.deployment.create(config_id)
+    deployment_response = ai_api_v2_client.deployment.create(config_id)
     
-    print("CREATED DEPLOYMENT", deployment_resp.id)
+    logging.info(f"CREATED DEPLOYMENT {deployment_response.id}")
     
-    return deployment_resp.id
+    return deployment_response.id
+
+
+def executable_status(ai_api_v2_client: AICoreV2Client, executable, last_time):
+    """get executable status"""
+    try:
+        if executable["type"] == "EXECUTION":
+            executable_object = ai_api_v2_client.execution.get(executable["id"])
+        else:
+            executable_object = ai_api_v2_client.deployment.get(executable["id"])    
+    except:
+        return "UNKNOWN", [], last_time
+    
+    status = executable_object.status.value
+    
+    if not last_time:
+        start_time = executable_object.submission_time
+    else:
+        start_time = last_time + timedelta(seconds=1)
+        
+    if executable["type"] == "EXECUTION":
+        logs = ai_api_v2_client.deployment.query_logs(executable["id"], start=start_time).data.result
+    else:
+        logs = ai_api_v2_client.execution.query_logs(executable["id"], start=start_time).data.result
+
+    new_last_time = logs[-1].timestamp if logs else last_time
+    
+    return status, logs, new_last_time
+
+
+def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
+    """polling logs and displaying them to console until status is reached"""
+    logging.info("#"*55)
+    local_log = lambda _: logging.info(f"""POLLING LOGS {executable["type"]} {executable["configuration"]["executable_id"]} {executable["id"]}""")
+    
+    last_time = None
+    logs_started = False
+    reached_status = False
+    for _ in range(60):
+        
+        status, logs, last_time = executable_status(ai_api_v2_client, executable, last_time)
+
+        if not logs_started and len(logs) < 1:
+            local_log()
+        else:
+            logs_started = True
+        display_logs(logs)
+        
+        if status == executable["wait_for_status"]:
+            reached_status = True
+            break
+        if status == "DEAD":
+            break
+        
+        if logs_started:
+            time.sleep(2)  
+        else:
+            time.sleep(15) # sleep longer if not ready
+    return reached_status
 
 
 def clean_up_tenant(ai_api_v2_client: AICoreV2Client):
+    """gracefully clean up tenant from old instances, by stopping/deleting"""
     old_deployments = ai_api_v2_client.deployment.query()
     for deployment in old_deployments.resources:
         try:
@@ -163,7 +179,7 @@ def clean_up_tenant(ai_api_v2_client: AICoreV2Client):
             ai_api_v2_client.deployment.delete(deployment.id)
         except:
             pass
-        print("DELETED DEPLOYMENT", deployment.id)
+        logging.info(f"DELETED DEPLOYMENT {deployment.id}")
         
     old_executions = ai_api_v2_client.execution.query()
     for execution in old_executions.resources:
@@ -171,12 +187,13 @@ def clean_up_tenant(ai_api_v2_client: AICoreV2Client):
             ai_api_v2_client.execution.delete(execution.id)
         except:
             pass
-        print("DELETED EXECUTION", execution.id)
+        logging.info(f"DELETED EXECUTION {execution.id}")
         
-    
 
-def deploy(cleanup=True, wait_for_logs=True):
-    print("START DEPLOYING TO RESOURCE GROUP", AICORE_RESOURCE_GROUP)
+def deploy(cleanup=True, wait_for_status=True, update_destination=True):
+    """manage deployment of artifacts, executions and deployments from config file"""
+    
+    logging.info(f"START DEPLOYING TO RESOURCE GROUP {AICORE_RESOURCE_GROUP}")
     
     artifacts, executions, deployments = load_deployment_configuration()
 
@@ -188,10 +205,10 @@ def deploy(cleanup=True, wait_for_logs=True):
         resource_group=AICORE_RESOURCE_GROUP
     )
     
-
-    resource_group_create = ai_api_v2_client.resource_groups.create(resource_group_id=AICORE_RESOURCE_GROUP)
-    print(f"RESOURCE GROUP CREATED {AICORE_RESOURCE_GROUP}")
-    sync = ai_api_v2_client.applications.refresh("felix-cicd")
+    ai_api_v2_client.resource_groups.create(resource_group_id=AICORE_RESOURCE_GROUP)
+    logging.info(f"RESOURCE GROUP CREATED {AICORE_RESOURCE_GROUP}")
+    
+    ai_api_v2_client.applications.refresh("felix-cicd")
     
     for _ in range(60):
         status = ai_api_v2_client.applications.get_status("felix-cicd")
@@ -213,11 +230,16 @@ def deploy(cleanup=True, wait_for_logs=True):
         deployment["id"] = create_deployment(ai_api_v2_client, deployment, artifacts)
         deployment["type"] = "DEPLOYMENT"
 
-    if wait_for_logs:
+    if wait_for_status:
         for execution in executions:
             wait_on_executable_logs(ai_api_v2_client, execution)
         for deployment in deployments:
             wait_on_executable_logs(ai_api_v2_client, deployment)
+            
+    if update_destination:
+        for deployment in deployments:
+            if deployment["wait_for_status"] and deployment["reached_status"]:
+                update_deployment_destination(deployment["destination_name"], deployment["id"])
 
             
             
