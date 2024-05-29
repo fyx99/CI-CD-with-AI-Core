@@ -68,7 +68,7 @@ def create_configuration(ai_api_v2_client: AICoreV2Client, configuration, artifa
     """create or find duplicate configuration"""
     
     parameter_bindings = [ParameterBinding(e["key"], e["value"]) for e in configuration["parameter_bindings"]]
-    input_artifact_bindings = [InputArtifactBinding(e["key"], filter(lambda d: d["key"] == e["key"], artifacts)["id"]) for e in configuration["input_artifact_bindings"]]
+    input_artifact_bindings = [InputArtifactBinding(e["key"], next(filter(lambda d: d["key"] == e["key"], artifacts))["id"]) for e in configuration["input_artifact_bindings"]]
 
     available_configurations = ai_api_v2_client.configuration.query()
 

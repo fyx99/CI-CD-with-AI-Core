@@ -4,7 +4,7 @@
             "key": "example-dataset",
             "name": "Example Dataset",
             "kind": "dataset",
-            "url": "ai://default/cicd",
+            "url": "ai://default/cicd/example.txt",
             "scenario_id": "cicdexample"
         }
     ],
