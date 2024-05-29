@@ -3,6 +3,8 @@ import logging
 import requests
 from requests.auth import HTTPBasicAuth
 
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+
 AICORE_AUTH_URL = os.environ["AICORE_AUTH_URL"]
 AICORE_BASE_URL = os.environ["AICORE_BASE_URL"]
 AICORE_CLIENT_ID = os.environ["AICORE_CLIENT_ID"]
@@ -17,6 +19,8 @@ DESTINATION_CLIENT_SECRET = os.environ["DESTINATION_CLIENT_SECRET"]
 
 def update_deployment_destination(destination_name, deployment_id):
     """create or update a subaccount level destination for a deployment id"""
+    
+    logging.info(f"CREATE DESTINATION {destination_name}")
         
     auth_response = requests.post(f"{DESTINATION_AUTH_URL}/oauth/token?grant_type=client_credentials", auth=HTTPBasicAuth(DESTINATION_CLIENT_ID, DESTINATION_CLIENT_SECRET))
 
@@ -47,4 +51,4 @@ def update_deployment_destination(destination_name, deployment_id):
         update_response = requests.put(f"{DESTINATION_BASE_URL}/destination-configuration/v1/subaccountDestinations", json=destination_body, headers=headers)
 
     if create_response.status_code == 201 or update_response.status_code == 200:
-        logging.info("DESTINATION SUCCESSFULLY CREATED/UPDATED")
+        logging.info(f"DESTINATION {destination_name} SUCCESSFULLY CREATED/UPDATED")

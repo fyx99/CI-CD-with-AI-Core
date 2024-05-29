@@ -1,4 +1,10 @@
+import os
+import json
+import time
+import logging
+from datetime import timedelta
 from typing import List
+
 from ai_core_sdk.ai_core_v2_client import AICoreV2Client
 from ai_api_client_sdk.models.artifact import Artifact
 from ai_api_client_sdk.models.parameter_binding import ParameterBinding
@@ -6,22 +12,16 @@ from ai_api_client_sdk.models.input_artifact_binding import InputArtifactBinding
 from ai_api_client_sdk.models.target_status import TargetStatus
 from ai_api_client_sdk.models.log_response import LogResultItem
 
+from destinations import update_deployment_destination
 
-from datetime import datetime, timedelta
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
-import os
-import json
-import time
-import logging
-
-from cicd.destinations import update_deployment_destination
 
 AICORE_AUTH_URL = os.environ["AICORE_AUTH_URL"]
 AICORE_BASE_URL = os.environ["AICORE_BASE_URL"]
 AICORE_CLIENT_ID = os.environ["AICORE_CLIENT_ID"]
 AICORE_CLIENT_SECRET = os.environ["AICORE_CLIENT_SECRET"]
 AICORE_RESOURCE_GROUP = os.environ["AICORE_RESOURCE_GROUP"]
-
 
 
 def load_deployment_configuration():
@@ -125,12 +125,15 @@ def executable_status(ai_api_v2_client: AICoreV2Client, executable, last_time):
         start_time = executable_object.submission_time
     else:
         start_time = last_time + timedelta(seconds=1)
-        
-    if executable["type"] == "EXECUTION":
-        logs = ai_api_v2_client.deployment.query_logs(executable["id"], start=start_time).data.result
-    else:
-        logs = ai_api_v2_client.execution.query_logs(executable["id"], start=start_time).data.result
-
+    
+    try:
+        if executable["type"] == "EXECUTION":
+            logs = ai_api_v2_client.execution.query_logs(executable["id"], start=start_time).data.result
+        else:
+            logs = ai_api_v2_client.deployment.query_logs(executable["id"], start=start_time).data.result
+    except:
+        return "UNKNOWN", [], last_time
+    
     new_last_time = logs[-1].timestamp if logs else last_time
     
     return status, logs, new_last_time
@@ -139,7 +142,7 @@ def executable_status(ai_api_v2_client: AICoreV2Client, executable, last_time):
 def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
     """polling logs and displaying them to console until status is reached"""
     logging.info("#"*55)
-    local_log = lambda _: logging.info(f"""POLLING LOGS {executable["type"]} {executable["configuration"]["executable_id"]} {executable["id"]}""")
+    logging.info(f"""POLLING LOGS {executable["type"]} {executable["configuration"]["executable_id"]} {executable["id"]}""")
     
     last_time = None
     logs_started = False
@@ -149,9 +152,10 @@ def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
         status, logs, last_time = executable_status(ai_api_v2_client, executable, last_time)
 
         if not logs_started and len(logs) < 1:
-            local_log()
+            logging.info("POLLING LOGS")
         else:
             logs_started = True
+        
         display_logs(logs)
         
         if status == executable["wait_for_status"]:
@@ -234,7 +238,7 @@ def deploy(cleanup=True, wait_for_status=True, update_destination=True):
         for execution in executions:
             wait_on_executable_logs(ai_api_v2_client, execution)
         for deployment in deployments:
-            wait_on_executable_logs(ai_api_v2_client, deployment)
+            deployment["reached_status"] = wait_on_executable_logs(ai_api_v2_client, deployment)
             
     if update_destination:
         for deployment in deployments:

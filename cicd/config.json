@@ -1,7 +1,7 @@
 {   
     "artifacts": [
         {
-            "key": "exampledataset",
+            "key": "example-dataset",
             "name": "Example Dataset",
             "kind": "dataset",
             "url": "ai://default/cicd",
@@ -20,7 +20,11 @@
                         "value": "test1"
                     } 
                 ],
-                "input_artifact_bindings": []
+                "input_artifact_bindings": [
+                    {
+                        "key": "example-dataset"
+                    }
+                ]
             },
             "wait_for_status": "COMPLETED"
         }

@@ -27,6 +27,10 @@ spec:
         default: "test"
   templates:
     - name: cicdexample
+      inputs:
+        artifacts:
+          - name: example-dataset
+            path: /app/data
       outputs:
         artifacts:
           - name: example-model
