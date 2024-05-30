@@ -35,6 +35,7 @@ spec:
         containers:
         - name: kserve-container
           image: docker.io/bfwork/cicdexample
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
               protocol: TCP

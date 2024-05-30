@@ -1,0 +1,51 @@
+{   
+    "artifacts": [
+        {
+            "key": "example-dataset",
+            "name": "Example Dataset",
+            "kind": "dataset",
+            "url": "ai://default/cicd/example.txt",
+            "scenario_id": "cicdexample"
+        }
+    ],
+    "executions": [
+        {
+            "configuration": {
+                "name": "Configuration CI/CD Example Training",
+                "scenario_id": "cicdexample",
+                "executable_id": "cicdexample",
+                "parameter_bindings": [ 
+                    {
+                        "key": "envexample",
+                        "value": "test1"
+                    } 
+                ],
+                "input_artifact_bindings": [
+                    {
+                        "key": "example-dataset"
+                    }
+                ]
+            },
+            "wait_for_status": "COMPLETED"
+        }
+    ],
+    "deployments": [
+        {
+            "id": "d500245f18ff405f",
+            "configuration": {
+                "name": "Configuration CI/CD Example Serving",
+                "scenario_id": "cicdexample",
+                "executable_id": "cicdexample2",
+                "parameter_bindings": [ 
+                    {
+                        "key": "envexample",
+                        "value": "test_updated_two"
+                    } 
+                ],
+                "input_artifact_bindings": []
+            },
+            "destination_name": "AI_CORE_DEPLOYMENT_CICD2",
+            "wait_for_status": "RUNNING"
+        }
+    ]
+}
