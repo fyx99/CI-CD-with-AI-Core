@@ -31,7 +31,7 @@ def load_deployment_configuration():
 
         
 def create_artifact(ai_api_v2_client: AICoreV2Client, artifact_b: Artifact):
-    """create or find duplicate artifact from json configuration"""    
+    """create artifact from json configuration"""    
     available_artifacts = ai_api_v2_client.artifact.query()
     for artifact_a in available_artifacts.resources:
         if artifact_a.name == artifact_b["name"] and artifact_a.kind == Artifact.Kind(artifact_b["kind"]) and artifact_a.url == artifact_b["url"] and artifact_a.scenario_id == artifact_b["scenario_id"]:
@@ -42,7 +42,7 @@ def create_artifact(ai_api_v2_client: AICoreV2Client, artifact_b: Artifact):
 
 
 def create_configuration(ai_api_v2_client: AICoreV2Client, configuration, artifacts):
-    """create or find duplicate configuration"""
+    """create configuration"""
     
     parameter_bindings = [ParameterBinding(e["key"], e["value"]) for e in configuration["parameter_bindings"]]
     input_artifact_bindings = [InputArtifactBinding(e["key"], next(filter(lambda d: d["key"] == e["key"], artifacts))["id"]) for e in configuration["input_artifact_bindings"]]
@@ -67,8 +67,18 @@ def update_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
     return deployment_response.id
 
 
-def deploy(cleanup=True, wait_for_status=True, update_destination=True):
-    """manage deployment of artifacts, executions and deployments from config file"""
+def demonstrate(ai_api_v2_client):
+    for _ in range(300):
+        try:
+            res = ai_api_v2_client.rest_client.post("/inference/deployments/de43dcb158de6825/v2/hello/")
+            print(res)
+        except:
+            print("fail")
+        time.sleep(3)
+
+
+def deploy():
+    """manage deployment of artifacts and update deployments from config file"""
     
     logging.info(f"START DEPLOYING TO RESOURCE GROUP {AICORE_RESOURCE_GROUP}")
     
@@ -85,19 +95,11 @@ def deploy(cleanup=True, wait_for_status=True, update_destination=True):
     for artifact in artifacts:
         artifact["id"] = create_artifact(ai_api_v2_client, artifact)
 
-    
-
     for deployment in deployments:
         update_deployment(ai_api_v2_client, deployment, artifacts)
 
-    for n in range(300):
-        try:
-            res = ai_api_v2_client.rest_client.post("/inference/deployments/d500245f18ff405f/v2/hello/")
-            print(res)
-        except:
-            print("fail")
-        time.sleep(1)
-    a= 1
+    demonstrate(ai_api_v2_client)
+        
             
 if __name__ == "__main__":
     

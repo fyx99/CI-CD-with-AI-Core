@@ -31,7 +31,7 @@
     ],
     "deployments": [
         {
-            "id": "d500245f18ff405f",
+            "id": "de43dcb158de6825",
             "configuration": {
                 "name": "Configuration CI/CD Example Serving",
                 "scenario_id": "cicdexample",
@@ -39,7 +39,7 @@
                 "parameter_bindings": [ 
                     {
                         "key": "envexample",
-                        "value": "test_updated_two"
+                        "value": "this_is_the_updated_env_variable_from_the_new_config"
                     } 
                 ],
                 "input_artifact_bindings": []

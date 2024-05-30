@@ -28,11 +28,12 @@ def load_deployment_configuration():
     """load ai core deployment configuration file from json, file needs to be in the cicd folder"""
     with open("cicd/config.json") as json_file:
         configuration = json.load(json_file)
+    cleanup_flag = configuration["clean_up"]
     artifacts = configuration["artifacts"]
     executions = configuration["executions"]
     deployments = configuration["deployments"]
     
-    return artifacts, executions, deployments
+    return cleanup_flag, artifacts, executions, deployments
 
 def display_logs(logs: List[LogResultItem], filter_ai_core=True):
     """print logs and filter ai core platform logs starting with time="""
@@ -97,12 +98,15 @@ def create_execution(ai_api_v2_client: AICoreV2Client, execution, artifacts):
     return execution_response.id
 
 
-def create_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
+def create_or_modify_deployment(ai_api_v2_client: AICoreV2Client, deployment, artifacts):
     """create deployment"""
     
     config_id = create_configuration(ai_api_v2_client, deployment["configuration"], artifacts)
 
-    deployment_response = ai_api_v2_client.deployment.create(config_id)
+    if "existing_deployment_id" in deployment: # existing deployment should be patched instead of new created
+        deployment_response = ai_api_v2_client.deployment.modify(deployment["existing_deployment_id"], None, config_id)
+    else:
+        deployment_response = ai_api_v2_client.deployment.create(config_id)
     
     logging.info(f"CREATED DEPLOYMENT {deployment_response.id}")
     
@@ -171,10 +175,12 @@ def wait_on_executable_logs(ai_api_v2_client: AICoreV2Client, executable):
     return reached_status
 
 
-def clean_up_tenant(ai_api_v2_client: AICoreV2Client):
+def clean_up_tenant(ai_api_v2_client: AICoreV2Client, used_deployments):
     """gracefully clean up tenant from old instances, by stopping/deleting"""
     old_deployments = ai_api_v2_client.deployment.query()
     for deployment in old_deployments.resources:
+        if deployment.id in used_deployments:
+            continue
         try:
             ai_api_v2_client.deployment.modify(deployment.id, TargetStatus.STOPPED)
         except:
@@ -194,12 +200,12 @@ def clean_up_tenant(ai_api_v2_client: AICoreV2Client):
         logging.info(f"DELETED EXECUTION {execution.id}")
         
 
-def deploy(cleanup=True, wait_for_status=True, update_destination=True):
+def deploy():
     """manage deployment of artifacts, executions and deployments from config file"""
     
     logging.info(f"START DEPLOYING TO RESOURCE GROUP {AICORE_RESOURCE_GROUP}")
     
-    artifacts, executions, deployments = load_deployment_configuration()
+    cleanup_flag, artifacts, executions, deployments = load_deployment_configuration()
 
     ai_api_v2_client = AICoreV2Client(
         base_url=AICORE_BASE_URL, 
@@ -220,8 +226,8 @@ def deploy(cleanup=True, wait_for_status=True, update_destination=True):
             break
         time.sleep(2)
 
-    if cleanup:
-        clean_up_tenant(ai_api_v2_client)
+    if cleanup_flag:
+        clean_up_tenant(ai_api_v2_client, [d["existing_deployment_id"] for d in deployments])   # do not delete deployments that are supposed to be updated
 
     for artifact in artifacts:
         artifact["id"] = create_artifact(ai_api_v2_client, artifact)
@@ -231,19 +237,20 @@ def deploy(cleanup=True, wait_for_status=True, update_destination=True):
         execution["type"] = "EXECUTION"
 
     for deployment in deployments:
-        deployment["id"] = create_deployment(ai_api_v2_client, deployment, artifacts)
+        deployment["id"] = create_or_modify_deployment(ai_api_v2_client, deployment, artifacts)
         deployment["type"] = "DEPLOYMENT"
 
-    if wait_for_status:
-        for execution in executions:
+    for execution in executions:
+        if execution["wait_for_status"]:
             wait_on_executable_logs(ai_api_v2_client, execution)
-        for deployment in deployments:
+            
+    for deployment in deployments:
+        if deployment["wait_for_status"]:
             deployment["reached_status"] = wait_on_executable_logs(ai_api_v2_client, deployment)
             
-    if update_destination:
-        for deployment in deployments:
-            if deployment["wait_for_status"] and deployment["reached_status"]:
-                update_deployment_destination(deployment["destination_name"], deployment["id"])
+    for deployment in deployments:
+        if deployment["destination_name"] and deployment["wait_for_status"] and deployment["reached_status"]:
+            update_deployment_destination(deployment["destination_name"], deployment["id"])
 
             
             

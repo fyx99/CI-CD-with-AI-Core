@@ -33,7 +33,7 @@ def predict(input_data: float):
 @app.post("/v2/hello/")
 def hello():
     print("hello", file=sys.stderr)
-    return {"prediction": "hello_update", "envexample": os.environ.get("envexample", "none")}
+    return {"prediction": "this_is_the_updated_code", "envexample": os.environ.get("envexample", "none")}
 
 
 # Run the FastAPI server with UVicorn

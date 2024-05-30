@@ -47,7 +47,7 @@ def update_deployment_destination(destination_name, deployment_id):
 
     create_response = requests.post(f"{DESTINATION_BASE_URL}/destination-configuration/v1/subaccountDestinations", json=destination_body, headers=headers)
     
-    if create_response.status_code == 409:
+    if create_response.status_code == 409:  # means destination with name exists
         update_response = requests.put(f"{DESTINATION_BASE_URL}/destination-configuration/v1/subaccountDestinations", json=destination_body, headers=headers)
 
     if create_response.status_code == 201 or update_response.status_code == 200:
