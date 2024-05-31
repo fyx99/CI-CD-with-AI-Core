@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: trainenvdemo
+  annotations:
+    scenarios.ai.sap.com/description: "trainenvdemo"
+    scenarios.ai.sap.com/name: "trainenvdemo"
+    executables.ai.sap.com/description: "trainenvdemo"
+    executables.ai.sap.com/name: "trainenvdemo"
+  labels:
+    scenarios.ai.sap.com/id: "trainenvdemo"
+    executables.ai.sap.com/id: "trainenvdemo"
+    ai.sap.com/version: "1.0.0"
+spec:
+  entrypoint: trainenvdemo
+  arguments:
+    parameters:
+      - name: "ENV_FROM_CONFIG"    # name of the configuration parameter "not" the actual env variable set below
+        description: "description of the parameter"
+        default: "some default value for ENV_FROM_CONFIG"
+      - name: "ENV_FROM_CONFIG_DEFAULT"
+        description: "description of the parameter"
+        default: "some default value for ENV_FROM_CONFIG_DEFAULT"
+  templates:
+    - name: trainenvdemo
+      container:
+        image: docker.io/python:latest
+        env: 
+          - name: ENV_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: felix-secret-1
+                key: api-key
+          - name: ENV_HARDCODED
+            value: "here we can hardcode any values we just want to have in the template"
+          - name: ENV_FROM_CONFIG
+            value: "{{workflow.parameters.ENV_FROM_CONFIG}}"          
+          - name: ENV_FROM_CONFIG_DEFAULT
+            value: "{{workflow.parameters.ENV_FROM_CONFIG_DEFAULT}}"
+        command:
+          - python3
+          - '-c'
+        args:
+          - |
+           import os
+           print("Hello from SAP AI Core ENV Demo")
+           print(os.environ.get("ENV_SECRET", "not_set"))
+           print(os.environ.get("ENV_HARDCODED", "not_set"))
+           print(os.environ.get("ENV_FROM_CONFIG", "not_set"))
+           print(os.environ.get("ENV_FROM_CONFIG_DEFAULT", "not_set"))

@@ -1,0 +1,63 @@
+apiVersion: ai.sap.com/v1alpha1
+kind: ServingTemplate
+metadata:
+  name: serveenvdemo
+  annotations:
+    scenarios.ai.sap.com/description: "serveenvdemo"
+    scenarios.ai.sap.com/name: "serveenvdemo"
+    executables.ai.sap.com/description: "serveenvdemo"
+    executables.ai.sap.com/name: "serveenvdemo"
+  labels:
+    scenarios.ai.sap.com/id: "serveenvdemo"
+    ai.sap.com/version: "1.0"
+spec:
+  inputs:
+    parameters: 
+      - name: "ENV_FROM_CONFIG"    # name of the configuration parameter "not" the actual env variable set below
+        description: "description of the parameter"
+        default: "some default value for ENV_FROM_CONFIG"
+      - name: "ENV_FROM_CONFIG_DEFAULT"
+        description: "description of the parameter"
+        default: "some default value for ENV_FROM_CONFIG_DEFAULT"
+  template:
+    apiVersion: "serving.kserve.io/v1beta1"
+    metadata:
+      annotations: |
+        autoscaling.knative.dev/metric: concurrency
+        autoscaling.knative.dev/target: 1
+        autoscaling.knative.dev/targetBurstCapacity: 0
+      labels: |
+        ai.sap.com/resourcePlan: starter
+    spec: |
+      predictor:
+        minReplicas: 1
+        maxReplicas: 5
+        containers:
+        - name: kserve-container
+          image: docker.io/python:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env: 
+            - name: ENV_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: felix-secret-1
+                  key: api-key
+            - name: ENV_HARDCODED
+              value: "here we can hardcode any values we just want to have in the template"
+            - name: ENV_FROM_CONFIG
+              value: "{{inputs.parameters.ENV_FROM_CONFIG}}"          
+            - name: ENV_FROM_CONFIG_DEFAULT
+              value: "{{inputs.parameters.ENV_FROM_CONFIG_DEFAULT}}"
+          command:
+            - python3
+            - '-c'
+          args:
+            - |
+              import os
+              print("Hello from SAP AI Core ENV Demo")
+              print(os.environ.get("ENV_SECRET", "not_set"))
+              print(os.environ.get("ENV_HARDCODED", "not_set"))
+              print(os.environ.get("ENV_FROM_CONFIG", "not_set"))
+              print(os.environ.get("ENV_FROM_CONFIG_DEFAULT", "not_set"))
