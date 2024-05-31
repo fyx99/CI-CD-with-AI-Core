@@ -16,9 +16,6 @@ spec:
       - name: "ENV_FROM_CONFIG"    # name of the configuration parameter "not" the actual env variable set below
         description: "description of the parameter"
         default: "some default value for ENV_FROM_CONFIG"
-      - name: "ENV_FROM_CONFIG_DEFAULT"
-        description: "description of the parameter"
-        default: "some default value for ENV_FROM_CONFIG_DEFAULT"
   template:
     apiVersion: "serving.kserve.io/v1beta1"
     metadata:
@@ -48,8 +45,6 @@ spec:
               value: "here we can hardcode any values we just want to have in the template"
             - name: ENV_FROM_CONFIG
               value: "{{inputs.parameters.ENV_FROM_CONFIG}}"          
-            - name: ENV_FROM_CONFIG_DEFAULT
-              value: "{{inputs.parameters.ENV_FROM_CONFIG_DEFAULT}}"
           command:
             - python3
             - '-c'
@@ -60,4 +55,3 @@ spec:
               print(os.environ.get("ENV_SECRET", "not_set"))
               print(os.environ.get("ENV_HARDCODED", "not_set"))
               print(os.environ.get("ENV_FROM_CONFIG", "not_set"))
-              print(os.environ.get("ENV_FROM_CONFIG_DEFAULT", "not_set"))
