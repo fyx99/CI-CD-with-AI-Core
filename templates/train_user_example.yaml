@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: userexample
+  annotations:
+    scenarios.ai.sap.com/description: "userexample"
+    scenarios.ai.sap.com/name: "userexample"
+    executables.ai.sap.com/description: "userexample"
+    executables.ai.sap.com/name: "userexample"
+  labels:
+    scenarios.ai.sap.com/id: "userexample"
+    executables.ai.sap.com/id: "userexample"
+    ai.sap.com/version: "1.0.0"
+spec:
+  entrypoint: userexample
+  templates:
+    - name: userexample
+      container:
+        image: "docker.io/bfwork/userexample"
+        securityContext:
+          runAsUser: 3000
+        command: ["/bin/sh", "-c"]
+        args:
+          - "whoami"
