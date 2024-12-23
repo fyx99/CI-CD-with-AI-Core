@@ -1,12 +1,12 @@
 # CI-CD-with-AI-Core
 
-This repository shows an example of how to use CI/CD with AI Core.
+This repository shows an example of how to use CI/CD with AI Core. This repo is used in the blog post [CI/CD with SAP AI Core](https://community.sap.com/t5/technology-blogs-by-sap/ci-cd-with-sap-ai-core/ba-p/13708965).
 
 ## How To Use
 
-config.json Schema:
+Reference of the config.json schema:
 
-
+```json
 {   
     "clean_up": true,                                       # true or false stop/delete old executables
     "artifacts": [

@@ -227,7 +227,7 @@ def deploy():
         time.sleep(2)
 
     if cleanup_flag:
-        clean_up_tenant(ai_api_v2_client, [d["existing_deployment_id"] for d in deployments])   # do not delete deployments that are supposed to be updated
+        clean_up_tenant(ai_api_v2_client, [d["existing_deployment_id"] for d in deployments if "existing_deployment_id" in d])   # do not delete deployments that are supposed to be updated
 
     for artifact in artifacts:
         artifact["id"] = create_artifact(ai_api_v2_client, artifact)
@@ -245,11 +245,11 @@ def deploy():
             wait_on_executable_logs(ai_api_v2_client, execution)
             
     for deployment in deployments:
-        if deployment["wait_for_status"]:
+        if "wait_for_status" in deployment:
             deployment["reached_status"] = wait_on_executable_logs(ai_api_v2_client, deployment)
             
     for deployment in deployments:
-        if deployment["destination_name"] and deployment["wait_for_status"] and deployment["reached_status"]:
+        if "destination_name" in deployment and "wait_for_status" in deployment and deployment["reached_status"]:
             update_deployment_destination(deployment["destination_name"], deployment["id"])
 
             
